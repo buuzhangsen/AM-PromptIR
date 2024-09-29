@@ -1,5 +1,23 @@
 # Installation
 
+### Dependencies Installation
+
+This repository is built in PyTorch 1.8.1 and tested on Ubuntu 18.04 environment (Python3.8, CUDA11.6, cuDNN8.5).
+Follow these intructions
+
+1. Clone our repository
+```
+git clone https://github.com/va1shn9v/PromptIR.git
+cd PromptIR
+```
+
+2. Create conda environment
+The Conda environment used can be recreated using the env.yml file
+```
+conda env create -f env.yml
+```
+
+
 ### Dataset Download and Preperation
 
 All the 5 datasets used in the paper can be downloaded from the following locations:
@@ -15,25 +33,26 @@ After placing the training data the directory structure would be as follows:
 ```
 └───Train
     ├───Dehaze
-    │   ├───original
-    │   └───synthetic
+    │   ├───high
+    │   └───low
     ├───Denoise
     └───Derain
-        ├───gt
-        └───rainy
+        ├───high
+        └───low
 ```
 
 The testing data should be placed in the ```test``` directory wherein each task has a seperate directory. The test directory after setup:
 
 ```
 ├───dehaze
-│   ├───input
-│   └───target
+│   └───SOTS
+│       ├───low
+│       └───high
 ├───denoise
 │   ├───bsd68
 │   └───urban100
 └───derain
     └───Rain100L
-        ├───input
-        └───target
+        ├───low
+        └───high
 ```
