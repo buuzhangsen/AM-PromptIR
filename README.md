@@ -62,7 +62,7 @@ Performance results of the AM-PromptIR framework trained under the all-in-one se
 
 <summary><strong>Visual Results</strong></summary>
 
-The visual results of the PromptIR model evaluated under the all-in-one setting can be downloaded [here]().
+The visual results of the PromptIR model evaluated under the all-in-one setting can be downloaded [here](https://drive.google.com/drive/folders/1koyCHH7K4h6gptQoOtAQKgEPdLY48Xsk?usp=drive_link).
 
 
 
