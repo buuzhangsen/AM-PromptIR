@@ -20,7 +20,7 @@ ing its robustness in tackling multiple degradation issues.*
 
 ## Network Architecture
 
-<img src = "mainfig.png"> 
+<img src = "mainfig.jpg"> 
 
 ## Installation and Data Preparation
 
