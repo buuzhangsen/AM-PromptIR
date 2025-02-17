@@ -8,7 +8,7 @@
 
 ## Network Architecture
 
-<img src = "AM-promptIR.jpg"> 
+<img src = "AM-PromptIR.jpg"> 
 
 ## Installation and Data Preparation
 
