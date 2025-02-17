@@ -46,7 +46,7 @@ Performance results of the AM-PromptIR framework trained under the all-in-one se
 
 <summary><strong>Table</strong> </summary>
 
-<img src = "results.png"> 
+<img src = "result.png"> 
 
 <summary><strong>Visual Results</strong></summary>
 
