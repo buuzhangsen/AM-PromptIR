@@ -1,8 +1,3 @@
-## PromptIR: Prompting for All-in-One Blind Image Restoration
-## Vaishnav Potlapalli, Syed Waqas Zamir, Salman Khan, and Fahad Shahbaz Khan
-## https://arxiv.org/abs/2306.13090
-
-## 修改CLIP信息丢失问题的版本
 
 import torch
 import clip
@@ -157,38 +152,6 @@ class GSA_Block(nn.Module):
         return out1
 
 
-# class LPA_Block(nn.Module):
-#     """Local Pixel-wise Attention Block"""
-#     def __init__(self, kernel_size=7):
-#         super(LPA_Block, self).__init__()
-#         self.kernel_size = kernel_size
-
-#         assert kernel_size % 2 == 1, "Odd kernel size required"
-#         self.conv = nn.Conv2d(in_channels = 2, out_channels = 1, kernel_size = kernel_size, padding= int((kernel_size-1)/2))
-#         # batchnorm
-
-#     def forward(self, x):
-#         max_pool = self.agg_channel(x, "max")
-#         avg_pool = self.agg_channel(x, "avg")
-#         pool = torch.cat([max_pool, avg_pool], dim = 1)
-#         conv = self.conv(pool)
-        
-#         conv = conv.repeat(1,x.size()[1],1,1)
-#         att = torch.sigmoid(conv)        
-#         return att
-
-#     def agg_channel(self, x, pool = "max"):
-#         b,c,h,w = x.size()
-#         x = x.view(b, c, h*w)
-#         x = x.permute(0,2,1)
-#         if pool == "max":
-#             x = F.max_pool1d(x,c)
-#         elif pool == "avg":
-#             x = F.avg_pool1d(x,c)
-#         x = x.permute(0,2,1)
-#         x = x.view(b,1,h,w)
-#         return x
-
 class FeedForward(nn.Module):
     def __init__(self, dim, ffn_expansion_factor, bias):
         super(FeedForward, self).__init__()
@@ -249,57 +212,6 @@ class Attention(nn.Module):
         x_and = torch.cat((x_conv,x_GSA),dim=1)
         out = self.project_out(x_and)
         return out
-
-
-##########################################################################
-## Multi-DConv Head Transposed Self-Attention (MDTA)
-# class Attention_1(nn.Module):
-#     def __init__(self, dim, num_heads, bias):
-#         super(Attention, self).__init__()
-#         self.num_heads = num_heads
-#         self.temperature = nn.Parameter(torch.ones(num_heads, 1, 1))
-
-#         self.qkv = nn.Conv2d(dim, dim * 3, kernel_size=1, bias=bias)
-#         self.qkv_dwconv = nn.Conv2d(dim * 3, dim * 3, kernel_size=3, stride=1, padding=1, groups=dim * 3, bias=bias)
-#         self.project_out = nn.Conv2d(dim, dim, kernel_size=1, bias=bias)
-
-#     def forward(self, x):
-#         b, c, h, w = x.shape
-
-#         qkv = self.qkv_dwconv(self.qkv(x))
-#         q, k, v = qkv.chunk(3, dim=1)
-
-#         q = rearrange(q, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
-#         k = rearrange(k, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
-#         v = rearrange(v, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
-
-#         q = torch.nn.functional.normalize(q, dim=-1)
-#         k = torch.nn.functional.normalize(k, dim=-1)
-
-#         attn = (q @ k.transpose(-2, -1)) * self.temperature
-#         attn = attn.softmax(dim=-1)
-
-#         out = (attn @ v)
-
-#         out = rearrange(out, 'b head c (h w) -> b (head c) h w', head=self.num_heads, h=h, w=w)
-
-#         out = self.project_out(out)
-#         return out
-
-
-# class resblock(nn.Module):
-#     def __init__(self, dim):
-#         super(resblock, self).__init__()
-#         # self.norm = LayerNorm(dim, LayerNorm_type='BiasFree')
-
-#         self.body = nn.Sequential(nn.Conv2d(dim, dim, kernel_size=3, stride=1, padding=1, bias=False),
-#                                   nn.PReLU(),
-#                                   nn.Conv2d(dim, dim, kernel_size=3, stride=1, padding=1, bias=False))
-
-#     def forward(self, x):
-#         res = self.body((x))
-#         res += x
-#         return res
 
 
 ##########################################################################
@@ -458,14 +370,7 @@ class PromptGenBlock(nn.Module):
         y = self.linear_text(y)
         y = y.unsqueeze(0).repeat(1, C, H, W)
         y = y[:, :, :H, :W]
-        # min_val = y.min(dim=1, keepdim=True)[0]
-        # max_val = y.max(dim=1, keepdim=True)[0]
         y = F.normalize(y, p=2, dim=1)
-        # # 对特征信息进行归一化处理
-        # y = (y - min_val) / (max_val - min_val)
-
-        # y= self.linear_text(y)  # 1,dim,h,w
-        # y = y.view(1, C, H, W)
         y= self.rate_conv(y)
 
         prompt = prompt_weights.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1) * self.prompt_param.unsqueeze(0).repeat(B, 1,
@@ -473,18 +378,9 @@ class PromptGenBlock(nn.Module):
                                                                                                                   1,
                                                                                                                   1).squeeze(
             1)
-        # prompt = prompt_weights.unsqueeze(-1).unsqueeze(-1).unsqueeze(
-        #     -1) * self.prompt_param.unsqueeze(0).repeat(B, 1,
-        #                                                 1, 1,
-        #                                                 1,
-        #                                                 1).squeeze(
-        #     1)
         prompt = torch.sum(prompt, dim=1)
         prompt = F.interpolate(prompt, (H, W), mode="bilinear")
-        # print(prompt.shape)
         prompt = self.frequency_refine(prompt,y)
-        # prompt = self.conv3x3(prompt)
-
         return prompt * self.para2 + x * self.para1
 
 
@@ -549,10 +445,6 @@ class PromptIR(nn.Module):
             self.prompt1 = PromptGenBlock(prompt_dim=dim*2, prompt_len=5, prompt_size=64, lin_dim=dim*2)
             self.prompt2 = PromptGenBlock(prompt_dim=dim*4, prompt_len=5, prompt_size=32, lin_dim=dim*4)
             self.prompt3 = PromptGenBlock(prompt_dim=dim*8, prompt_len=5, prompt_size=16, lin_dim=dim*8)
-
-        # self.chnl_reduce1 = nn.Conv2d(64, 64, kernel_size=1, bias=bias)
-        # self.chnl_reduce2 = nn.Conv2d(128, 128, kernel_size=1, bias=bias)
-        # self.chnl_reduce3 = nn.Conv2d(320, 256, kernel_size=1, bias=bias)
 
         self.reduce_noise_channel_1 = nn.Conv2d(dim*2, dim, kernel_size=1, bias=bias)
         self.encoder_level1 = nn.Sequential(*[
@@ -646,7 +538,6 @@ class PromptIR(nn.Module):
         inp_dec_level3 = self.up4_3(latent)
 
         inp_dec_level3 = torch.cat([inp_dec_level3, out_enc_level3], 1)
-        # inp_dec_level3 = self.reduce_chan_level3(inp_dec_level3)
         inp_dec_level3 = self.Feature_Refinement3(inp_dec_level3)
 
         out_dec_level3 = self.decoder_level3(inp_dec_level3)
@@ -658,19 +549,17 @@ class PromptIR(nn.Module):
 
         inp_dec_level2 = self.up3_2(out_dec_level3)
         inp_dec_level2 = torch.cat([inp_dec_level2, out_enc_level2], 1)
-        # inp_dec_level2 = self.reduce_chan_level2(inp_dec_level2)
         inp_dec_level2 = self.Feature_Refinement2(inp_dec_level2)
 
         out_dec_level2 = self.decoder_level2(inp_dec_level2)
         if self.decoder:
             dec1_param = self.prompt1(out_dec_level2,class_name)
             out_dec_level2 = torch.cat([out_dec_level2, dec1_param], 1)
-            out_dec_level2 = self.noise_level1(out_dec_level2)
+            out_dec_level2 = self.noise_level1(out_dec_level2)s
             out_dec_level2 = self.reduce_noise_level1(out_dec_level2)
 
         inp_dec_level1 = self.up2_1(out_dec_level2)
         inp_dec_level1 = torch.cat([inp_dec_level1, out_enc_level1], 1)
-        # out_dec_level1 = self.Feature_Refinement1(inp_dec_level1)
 
         out_dec_level1 = self.decoder_level1(inp_dec_level1)
 
