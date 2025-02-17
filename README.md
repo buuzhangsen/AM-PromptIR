@@ -1,4 +1,4 @@
-# Adaptive Multi-modal Prompting for Universal Image Restoration
+# Adaptive Multi-modal Prompting for All-in-One Image Restoration Amidst Diverse Degradations
 
 
 <hr />
