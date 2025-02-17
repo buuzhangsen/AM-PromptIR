@@ -2,6 +2,8 @@
 ## Vaishnav Potlapalli, Syed Waqas Zamir, Salman Khan, and Fahad Shahbaz Khan
 ## https://arxiv.org/abs/2306.13090
 
+## 修改CLIP信息丢失问题的版本
+
 import torch
 import clip
 from transformers import CLIPTextModel, CLIPTokenizer
@@ -27,31 +29,33 @@ def to_3d(x):
 def to_4d(x, h, w):
     return rearrange(x, 'b (h w) c -> b c h w', h=h, w=w)
 
+
 class Feature_Refinement_Block(nn.Module):  
     def __init__(self, input_channel,output_channel, reduction):
         super(Feature_Refinement_Block, self).__init__()
         self.ca = nn.Sequential(
             nn.AdaptiveAvgPool2d(1),
-            nn.Conv2d(input_channel, input_channel // reduction, 1, padding=0, bias=True),
+            nn.Conv2d(input_channel, input_channel // reduction, 1, padding=0, bias=False),
             nn.ReLU(inplace=True),
-            nn.Conv2d(input_channel // reduction, output_channel, 1, padding=0, bias=True),
-            nn.Sigmoid()
+            nn.Conv2d(input_channel // reduction, output_channel, 1, padding=0, bias=False)
+            # nn.Sigmoid()
         )
         self.sa = nn.Sequential(
-            nn.Conv2d(input_channel , output_channel, 3, 1, 1),
-            nn.Conv2d(output_channel, output_channel // 8, 3, 1, 1),
+            # nn.Conv2d(input_channel , output_channel, 1),
+            nn.Conv2d(output_channel, output_channel // reduction, 3, 1, 1),
             nn.ReLU(inplace=True),
-            nn.Conv2d(output_channel // 8, output_channel, 3, 1, 1),
+            nn.Conv2d(output_channel // reduction, output_channel, 3, 1, 1),
             nn.Sigmoid()
         )
         self.conv1 = nn.Conv2d(input_channel, output_channel, kernel_size=1)
 
     def forward(self, x):
-        # x = self.conv1(x)
+        x_1 = self.conv1(x)
         a = self.ca(x)
-        t = self.sa(x)
-        x = self.conv1(x)
-        s = torch.mul((1 - t), a) + torch.mul(t, x)
+        t = self.sa(x_1)
+        # x = self.conv1(x)
+        s = torch.mul((1 - t), a) + torch.mul(t, x_1)
+        # s = torch.mul(t, x)
         return s
 
 
@@ -91,6 +95,18 @@ class WithBias_LayerNorm(nn.Module):
         return (x - mu) / torch.sqrt(sigma + 1e-5) * self.weight + self.bias
 
 
+class LayerNorm_1(nn.Module):
+    def __init__(self, dim, LayerNorm_type):
+        super(LayerNorm, self).__init__()
+        if LayerNorm_type == 'BiasFree':
+            self.body = BiasFree_LayerNorm(dim)
+        else:
+            self.body = WithBias_LayerNorm(dim)
+
+    def forward(self, x):
+        h, w = x.shape[-2:]
+        return to_4d(self.body(to_3d(x)), h, w)
+    
 class LayerNorm(nn.Module):
     def __init__(self, dim, LayerNorm_type):
         super(LayerNorm, self).__init__()
@@ -102,7 +118,76 @@ class LayerNorm(nn.Module):
     def forward(self, x):
         h, w = x.shape[-2:]
         return to_4d(self.body(to_3d(x)), h, w)
+class GSA_Block(nn.Module):
+    """Global Strip-wise Attention"""
+    def __init__(self, inplanes, outplanes):
+        super(GSA_Block, self).__init__()
+        midplanes = int(inplanes*3)
 
+        self.pool_1_h = nn.AdaptiveAvgPool2d((None, 1))
+        self.pool_1_w = nn.AdaptiveAvgPool2d((1, None))
+        self.conv_1_h = nn.Conv2d(inplanes, midplanes, kernel_size=(3, 1), padding=(1, 0))
+        self.conv_1_w = nn.Conv2d(inplanes, midplanes, kernel_size=(1, 3), padding=(0, 1))
+
+
+        self.fuse_conv = nn.Conv2d(midplanes, midplanes, kernel_size=1, padding=0)
+        self.relu = nn.ReLU(inplace=False)
+        self.conv_final = nn.Conv2d(midplanes, outplanes, kernel_size=1)
+
+        self.mask_conv_1 = nn.Conv2d(outplanes, outplanes, kernel_size=3, padding=1)
+        self.mask_relu = nn.ReLU(inplace=False)
+        self.mask_conv_2 = nn.Conv2d(outplanes, outplanes, kernel_size=3, padding=1)
+
+
+    def forward(self, x):
+        _, _, h, w = x.size()
+        x_1_h = self.pool_1_h(x)
+        x_1_h = self.conv_1_h(x_1_h)
+        x_1_h = x_1_h.expand(-1, -1, h, w)
+
+        x_1_w = self.pool_1_w(x)
+        x_1_w = self.conv_1_w(x_1_w)
+        x_1_w = x_1_w.expand(-1, -1, h, w)
+                
+        hx = self.relu(self.fuse_conv(x_1_h + x_1_w))
+
+        mask_1 = self.conv_final(hx).sigmoid()
+        out1 = x * mask_1
+
+        return out1
+
+
+# class LPA_Block(nn.Module):
+#     """Local Pixel-wise Attention Block"""
+#     def __init__(self, kernel_size=7):
+#         super(LPA_Block, self).__init__()
+#         self.kernel_size = kernel_size
+
+#         assert kernel_size % 2 == 1, "Odd kernel size required"
+#         self.conv = nn.Conv2d(in_channels = 2, out_channels = 1, kernel_size = kernel_size, padding= int((kernel_size-1)/2))
+#         # batchnorm
+
+#     def forward(self, x):
+#         max_pool = self.agg_channel(x, "max")
+#         avg_pool = self.agg_channel(x, "avg")
+#         pool = torch.cat([max_pool, avg_pool], dim = 1)
+#         conv = self.conv(pool)
+        
+#         conv = conv.repeat(1,x.size()[1],1,1)
+#         att = torch.sigmoid(conv)        
+#         return att
+
+#     def agg_channel(self, x, pool = "max"):
+#         b,c,h,w = x.size()
+#         x = x.view(b, c, h*w)
+#         x = x.permute(0,2,1)
+#         if pool == "max":
+#             x = F.max_pool1d(x,c)
+#         elif pool == "avg":
+#             x = F.avg_pool1d(x,c)
+#         x = x.permute(0,2,1)
+#         x = x.view(b,1,h,w)
+#         return x
 
 class FeedForward(nn.Module):
     def __init__(self, dim, ffn_expansion_factor, bias):
@@ -142,78 +227,79 @@ class FeedForward(nn.Module):
 
         return x
 
-##########################################################################
-# Gated-Dconv Feed-Forward Network (GDFN)
-# class FeedForward(nn.Module):
-#     def __init__(self, dim, ffn_expansion_factor, bias):
-#         super(FeedForward, self).__init__()
+class Attention(nn.Module):
+    def __init__(self, dim, num_heads, bias):
+        super(Attention, self).__init__()
+        self.conv1 = nn.Conv2d(dim, dim*2, kernel_size=1)
+        self.conv2 = nn.Conv2d(dim, dim*2, kernel_size=1)
+        self.relu = nn.ReLU()
+        self.conv3 = nn.Conv2d(dim*2, dim*2, kernel_size=3,stride=1, padding=1)
+        # self.conv3 = nn.Conv2d(dim*3, dim*2, kernel_size=5, stride=1, padding=2)
+        # self.LPA = LPA_Block(kernel_size=5)
+        self.GSA = GSA_Block(dim, dim)
+        self.project_out = nn.Conv2d(dim*3, dim, kernel_size=1, bias=bias)
 
-#         hidden_features = int(dim * ffn_expansion_factor)
-
-#         self.project_in = nn.Conv2d(dim, hidden_features * 2, kernel_size=1, bias=bias)
-
-#         self.dwconv = nn.Conv2d(hidden_features * 2, hidden_features * 2, kernel_size=3, stride=1, padding=1,
-#                                 groups=hidden_features * 2, bias=bias)
-
-#         self.project_out = nn.Conv2d(hidden_features, dim, kernel_size=1, bias=bias)
-
-#     def forward(self, x):
-#         x = self.project_in(x)
-#         x1, x2 = self.dwconv(x).chunk(2, dim=1)
-#         x = F.gelu(x1) * x2
-#         x = self.project_out(x)
-#         return x
+    def forward(self, x):
+        # x_1= self.conv1(x)
+        x_conv = self.conv2(x)
+        x_conv = self.relu(x_conv)
+        x_conv = self.conv3(x_conv)
+        # x_LPA = self.LPA(x)
+        x_GSA = self.GSA(x)
+        x_and = torch.cat((x_conv,x_GSA),dim=1)
+        out = self.project_out(x_and)
+        return out
 
 
 ##########################################################################
 ## Multi-DConv Head Transposed Self-Attention (MDTA)
-class Attention(nn.Module):
-    def __init__(self, dim, num_heads, bias):
-        super(Attention, self).__init__()
-        self.num_heads = num_heads
-        self.temperature = nn.Parameter(torch.ones(num_heads, 1, 1))
+# class Attention_1(nn.Module):
+#     def __init__(self, dim, num_heads, bias):
+#         super(Attention, self).__init__()
+#         self.num_heads = num_heads
+#         self.temperature = nn.Parameter(torch.ones(num_heads, 1, 1))
 
-        self.qkv = nn.Conv2d(dim, dim * 3, kernel_size=1, bias=bias)
-        self.qkv_dwconv = nn.Conv2d(dim * 3, dim * 3, kernel_size=3, stride=1, padding=1, groups=dim * 3, bias=bias)
-        self.project_out = nn.Conv2d(dim, dim, kernel_size=1, bias=bias)
+#         self.qkv = nn.Conv2d(dim, dim * 3, kernel_size=1, bias=bias)
+#         self.qkv_dwconv = nn.Conv2d(dim * 3, dim * 3, kernel_size=3, stride=1, padding=1, groups=dim * 3, bias=bias)
+#         self.project_out = nn.Conv2d(dim, dim, kernel_size=1, bias=bias)
 
-    def forward(self, x):
-        b, c, h, w = x.shape
+#     def forward(self, x):
+#         b, c, h, w = x.shape
 
-        qkv = self.qkv_dwconv(self.qkv(x))
-        q, k, v = qkv.chunk(3, dim=1)
+#         qkv = self.qkv_dwconv(self.qkv(x))
+#         q, k, v = qkv.chunk(3, dim=1)
 
-        q = rearrange(q, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
-        k = rearrange(k, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
-        v = rearrange(v, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
+#         q = rearrange(q, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
+#         k = rearrange(k, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
+#         v = rearrange(v, 'b (head c) h w -> b head c (h w)', head=self.num_heads)
 
-        q = torch.nn.functional.normalize(q, dim=-1)
-        k = torch.nn.functional.normalize(k, dim=-1)
+#         q = torch.nn.functional.normalize(q, dim=-1)
+#         k = torch.nn.functional.normalize(k, dim=-1)
 
-        attn = (q @ k.transpose(-2, -1)) * self.temperature
-        attn = attn.softmax(dim=-1)
+#         attn = (q @ k.transpose(-2, -1)) * self.temperature
+#         attn = attn.softmax(dim=-1)
 
-        out = (attn @ v)
+#         out = (attn @ v)
 
-        out = rearrange(out, 'b head c (h w) -> b (head c) h w', head=self.num_heads, h=h, w=w)
+#         out = rearrange(out, 'b head c (h w) -> b (head c) h w', head=self.num_heads, h=h, w=w)
 
-        out = self.project_out(out)
-        return out
+#         out = self.project_out(out)
+#         return out
 
 
-class resblock(nn.Module):
-    def __init__(self, dim):
-        super(resblock, self).__init__()
-        # self.norm = LayerNorm(dim, LayerNorm_type='BiasFree')
+# class resblock(nn.Module):
+#     def __init__(self, dim):
+#         super(resblock, self).__init__()
+#         # self.norm = LayerNorm(dim, LayerNorm_type='BiasFree')
 
-        self.body = nn.Sequential(nn.Conv2d(dim, dim, kernel_size=3, stride=1, padding=1, bias=False),
-                                  nn.PReLU(),
-                                  nn.Conv2d(dim, dim, kernel_size=3, stride=1, padding=1, bias=False))
+#         self.body = nn.Sequential(nn.Conv2d(dim, dim, kernel_size=3, stride=1, padding=1, bias=False),
+#                                   nn.PReLU(),
+#                                   nn.Conv2d(dim, dim, kernel_size=3, stride=1, padding=1, bias=False))
 
-    def forward(self, x):
-        res = self.body((x))
-        res += x
-        return res
+#     def forward(self, x):
+#         res = self.body((x))
+#         res += x
+#         return res
 
 
 ##########################################################################
@@ -229,7 +315,7 @@ class Downsample(nn.Module):
         return self.body(x)
 
 
-class Upsample(nn.Module):
+class   Upsample(nn.Module):
     def __init__(self, n_feat):
         super(Upsample, self).__init__()
 
@@ -256,7 +342,6 @@ class TransformerBlock(nn.Module):
         x = x + self.ffn(self.norm2(x))
 
         return x
-
 
 
 
@@ -290,18 +375,61 @@ class FreRefine(nn.Module):
         out = low + high
         out = self.proj(out)
         return out
+
+    
+## Channel-Wise Cross Attention (CA)
+class Chanel_Cross_Attention(nn.Module):
+    def __init__(self, dim, bias):
+        super(Chanel_Cross_Attention, self).__init__()
+        self.num_head = 4
+        self.temperature = nn.Parameter(torch.ones(4, 1, 1), requires_grad=True)
+
+        self.q = nn.Conv2d(dim, dim, kernel_size=1, bias=bias)
+        self.q_dwconv = nn.Conv2d(dim, dim, kernel_size=3, stride=1, padding=1, groups=dim, bias=bias)
+
+
+        self.kv = nn.Conv2d(dim, dim*2, kernel_size=1, bias=bias)
+        self.kv_dwconv = nn.Conv2d(dim*2, dim*2, kernel_size=3, stride=1, padding=1, groups=dim*2, bias=bias)
+
+        self.project_out = nn.Conv2d(dim, dim, kernel_size=1, bias=bias)
+
+    def forward(self, x, y):
+        # x -> q, y -> kv
+        assert x.shape == y.shape, 'The shape of feature maps from image and features are not equal!'
+
+        b, c, h, w = x.shape
+        q = self.q_dwconv(self.q(x))
+        kv = self.kv_dwconv(self.kv(y))
+        k, v = kv.chunk(2, dim=1)
+
+        q = rearrange(q, 'b (head c) h w -> b head c (h w)', head=self.num_head)
+        k = rearrange(k, 'b (head c) h w -> b head c (h w)', head=self.num_head)
+        v = rearrange(v, 'b (head c) h w -> b head c (h w)', head=self.num_head)
+
+        q = torch.nn.functional.normalize(q, dim=-1)
+        k = torch.nn.functional.normalize(k, dim=-1)
+
+        attn = q @ k.transpose(-2, -1) * self.temperature
+        attn = attn.softmax(dim=-1)
+
+        out = attn @ v
+
+        out = rearrange(out, 'b head c (h w) -> b (head c) h w', head=self.num_head, h=h, w=w)
+
+        out = self.project_out(out)
+        return out
 ##########################################################################
 ##---------- Prompt Gen Module -----------------------
 
 
-# class TextToImage(nn.Module):
-#     def __init__(self, input_dim, output_dim):
-#         super(TextToImage, self).__init__()
-#         self.linear = nn.Linear(input_dim, output_dim)
+class TextToImage(nn.Module):
+    def __init__(self, input_dim, output_dim):
+        super(TextToImage, self).__init__()
+        self.linear = nn.Linear(input_dim, output_dim)
 
-#     def forward(self, x):
-#         x = self.linear(x)
-#         return x
+    def forward(self, x):
+        x = self.linear(x)
+        return x
 class PromptGenBlock(nn.Module):
     def __init__(self, prompt_dim=128, prompt_len=5, prompt_size=96, lin_dim=192):
         super(PromptGenBlock, self).__init__()
@@ -310,9 +438,10 @@ class PromptGenBlock(nn.Module):
         self.conv3x3 = nn.Conv2d(prompt_dim, prompt_dim, kernel_size=3, stride=1, padding=1, bias=False)
         self.linear_text = nn.Linear(in_features=prompt_dim // 2,out_features=prompt_dim)
         self.frequency_refine = FreRefine(prompt_dim)
+        # self.frequency_refine = Chanel_Cross_Attention(prompt_dim,bias=False)
         self.rate_conv = nn.Sequential(
             nn.Conv2d(prompt_dim, prompt_dim // 8, 1, bias=True),
-            nn.GELU(),
+            nn.ReLU(),
             nn.Conv2d(prompt_dim // 8, prompt_dim, 1, bias=True),
         )
         self.para1 = nn.Parameter(torch.zeros(prompt_dim, 1, 1))
@@ -329,7 +458,14 @@ class PromptGenBlock(nn.Module):
         y = self.linear_text(y)
         y = y.unsqueeze(0).repeat(1, C, H, W)
         y = y[:, :, :H, :W]
+        # min_val = y.min(dim=1, keepdim=True)[0]
+        # max_val = y.max(dim=1, keepdim=True)[0]
         y = F.normalize(y, p=2, dim=1)
+        # # 对特征信息进行归一化处理
+        # y = (y - min_val) / (max_val - min_val)
+
+        # y= self.linear_text(y)  # 1,dim,h,w
+        # y = y.view(1, C, H, W)
         y= self.rate_conv(y)
 
         prompt = prompt_weights.unsqueeze(-1).unsqueeze(-1).unsqueeze(-1) * self.prompt_param.unsqueeze(0).repeat(B, 1,
@@ -337,10 +473,17 @@ class PromptGenBlock(nn.Module):
                                                                                                                   1,
                                                                                                                   1).squeeze(
             1)
+        # prompt = prompt_weights.unsqueeze(-1).unsqueeze(-1).unsqueeze(
+        #     -1) * self.prompt_param.unsqueeze(0).repeat(B, 1,
+        #                                                 1, 1,
+        #                                                 1,
+        #                                                 1).squeeze(
+        #     1)
         prompt = torch.sum(prompt, dim=1)
         prompt = F.interpolate(prompt, (H, W), mode="bilinear")
+        # print(prompt.shape)
         prompt = self.frequency_refine(prompt,y)
-        prompt = self.conv3x3(prompt)
+        # prompt = self.conv3x3(prompt)
 
         return prompt * self.para2 + x * self.para1
 
@@ -385,12 +528,13 @@ class PromptIR(nn.Module):
     def __init__(self,
                  inp_channels=3,
                  out_channels=3,
-                 dim=48,
+                 dim=24,
                  num_blocks=[2, 4, 4, 8],
                  num_refinement_blocks=2,
                  heads=[1, 2, 4, 8],
                  ffn_expansion_factor=2.66,
                  bias=False,
+                 # LayerNorm_type='BiasFree',
                  LayerNorm_type='WithBias',  ## Other option 'BiasFree'
                  decoder=False,
                  ):
@@ -405,6 +549,10 @@ class PromptIR(nn.Module):
             self.prompt1 = PromptGenBlock(prompt_dim=dim*2, prompt_len=5, prompt_size=64, lin_dim=dim*2)
             self.prompt2 = PromptGenBlock(prompt_dim=dim*4, prompt_len=5, prompt_size=32, lin_dim=dim*4)
             self.prompt3 = PromptGenBlock(prompt_dim=dim*8, prompt_len=5, prompt_size=16, lin_dim=dim*8)
+
+        # self.chnl_reduce1 = nn.Conv2d(64, 64, kernel_size=1, bias=bias)
+        # self.chnl_reduce2 = nn.Conv2d(128, 128, kernel_size=1, bias=bias)
+        # self.chnl_reduce3 = nn.Conv2d(320, 256, kernel_size=1, bias=bias)
 
         self.reduce_noise_channel_1 = nn.Conv2d(dim*2, dim, kernel_size=1, bias=bias)
         self.encoder_level1 = nn.Sequential(*[
@@ -467,9 +615,9 @@ class PromptIR(nn.Module):
             TransformerBlock(dim=int(dim * 2 ** 1), num_heads=heads[0], ffn_expansion_factor=ffn_expansion_factor,
                              bias=bias, LayerNorm_type=LayerNorm_type) for i in range(num_refinement_blocks)])
 
-        self.output = nn.Conv2d(int(dim * 2 ** 1), out_channels, kernel_size=1, bias=bias)
-        self.Feature_Refinement1 = Feature_Refinement_Block(input_channel=int(dim * 2 ** 1),output_channel=int(dim*2**1), reduction=8)
-        self.Feature_Refinement2 = Feature_Refinement_Block(input_channel=int(dim * 2 ** 2),output_channel=int(dim*2**1), reduction=8)
+        self.output = nn.Conv2d(int(dim * 2 ** 1), out_channels, kernel_size=3, stride=1, padding=1, bias=bias)
+        # self.Feature_Refinement1 = Feature_Refinement_Block(input_channel=int(dim * 2 ** 1),output_channel=int(dim*2**1), reduction=4)
+        self.Feature_Refinement2 = Feature_Refinement_Block(input_channel=int(dim * 2 ** 2),output_channel=int(dim*2**1), reduction=4)
         self.Feature_Refinement3 = Feature_Refinement_Block(input_channel=int(dim * 2 ** 3),output_channel=int(dim*2**2), reduction=8)
 
     def forward(self, inp_img,class_name, noise_emb=None):
@@ -493,12 +641,12 @@ class PromptIR(nn.Module):
 
             latent = torch.cat([latent, dec3_param], 1)
             latent = self.noise_level3(latent)
-            # latent = self.Feature_Refinement3(latent)
             latent = self.reduce_noise_level3(latent)
 
         inp_dec_level3 = self.up4_3(latent)
 
         inp_dec_level3 = torch.cat([inp_dec_level3, out_enc_level3], 1)
+        # inp_dec_level3 = self.reduce_chan_level3(inp_dec_level3)
         inp_dec_level3 = self.Feature_Refinement3(inp_dec_level3)
 
         out_dec_level3 = self.decoder_level3(inp_dec_level3)
@@ -510,6 +658,7 @@ class PromptIR(nn.Module):
 
         inp_dec_level2 = self.up3_2(out_dec_level3)
         inp_dec_level2 = torch.cat([inp_dec_level2, out_enc_level2], 1)
+        # inp_dec_level2 = self.reduce_chan_level2(inp_dec_level2)
         inp_dec_level2 = self.Feature_Refinement2(inp_dec_level2)
 
         out_dec_level2 = self.decoder_level2(inp_dec_level2)
@@ -521,11 +670,11 @@ class PromptIR(nn.Module):
 
         inp_dec_level1 = self.up2_1(out_dec_level2)
         inp_dec_level1 = torch.cat([inp_dec_level1, out_enc_level1], 1)
+        # out_dec_level1 = self.Feature_Refinement1(inp_dec_level1)
 
         out_dec_level1 = self.decoder_level1(inp_dec_level1)
 
         out_dec_level1 = self.refinement(out_dec_level1)
-        out_dec_level1 = self.Feature_Refinement1(out_dec_level1)
 
         out_dec_level1 = self.output(out_dec_level1) + inp_img
 
