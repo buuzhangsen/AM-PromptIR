@@ -1,8 +1,4 @@
-"""
-Created on 2020/9/8
 
-@author: Boyun Li
-"""
 import os
 import numpy as np
 import torch
