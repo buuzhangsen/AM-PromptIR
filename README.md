@@ -1,21 +1,9 @@
-# AM-PromptIR:Adaptive Multi-Prompt Information-Guided Multi-Scale All-in-One Image Restoration
+# Adaptive Multi-modal Prompting for Universal Image Restoration Amidst Diverse Degradations
 
 
 <hr />
 
-> **Abstract:** *The goal of All-in-One image restoration is to use a single model to address
-various degradation types like noise, haze, blur, and rain streaks in low-quality
-images, producing high-quality outputs. While existing models perform well, they
-either rely solely on visual information or handle visual and semantic data sepa-
-rately, limiting their adaptability. To overcome this, we introduce AM-PromptIR,
-an adaptive multimodal prompt learning approach. It features an Adaptive Mul-
-timodal Prompt Generation module, dynamically adjusting prompts for different
-degradation types. Additionally, the Multi-Scale Feature Extraction and Fea-
-ture Enhancement and Fusion module capture multi-level features and optimize
-feature fusion. Experimental results show that AM-PromptIR improves PSNR
-by 5.5% in image dehazing, 4.0% in image deraining, and achieves at least a
-1.0% PSNR increase in image denoising across various noise levels, demonstrat-
-ing its robustness in tackling multiple degradation issues.* 
+> **Abstract:** *The field of image restoration aims to recover high-quality images from their degraded counterparts, encompassing tasks such as denoising, deraining, and dehazing. In real-world scenarios, images often suffer from complex and diverse degradations, posing significant challenges for existing restoration models. To address this, we propose AM-PromptIR, an adaptive multi-modal image restoration framework that leverages implicit relationships between diverse degradation types to guide the restoration process. AM-PromptIR employs an Adaptive Multi-modal Prompt Generation Module (AMPGM) to dynamically adjust the attention distribution of image features, enhancing detail recovery and structural reconstruction. Additionally, we introduce a Simplified Mixed Attention Mechanism (SMAM) and a Feature Enhancement and Fusion Module (FEFM) to improve feature extraction and fusion, respectively. Experimental results demonstrate that AM-PromptIR achieves state-of-the-art performance across various restoration tasks, with notable improvements of 9.2% in PSNR for dehazing and 5.3% for deraining tasks. These findings highlight the robustness and effectiveness of our approach in handling diverse image degradations.* 
 <hr />
 
 ## Network Architecture
@@ -62,7 +50,6 @@ Performance results of the AM-PromptIR framework trained under the all-in-one se
 
 <summary><strong>Visual Results</strong></summary>
 
-The visual results of the AM-PromptIR model evaluated under the all-in-one setting can be downloaded [here](https://drive.google.com/drive/folders/1koyCHH7K4h6gptQoOtAQKgEPdLY48Xsk?usp=drive_link).
 
 
 
