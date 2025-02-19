@@ -7,7 +7,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 
 from utils.dataset_utils import PromptTrainDataset
-from net.model import PromptIR
+from net.model import AM_PromptIR
 from utils.schedulers import LinearWarmupCosineAnnealingLR
 import numpy as np
 import wandb
@@ -18,10 +18,10 @@ from lightning.pytorch.callbacks import ModelCheckpoint
 from My_loss import CharbonnierLoss,Fu_loss 
 
 
-class PromptIRModel(pl.LightningModule):
+class AM_PromptIRModel(pl.LightningModule):
     def __init__(self):
         super().__init__()
-        self.net = PromptIR(decoder=True)
+        self.net = AM_PromptIR(decoder=True)
         self.loss_fn  = nn.L1Loss()
         self.loss_char = CharbonnierLoss()
         self.F_loss = Fu_loss()
@@ -56,7 +56,7 @@ def main():
     print("Options")
     print(opt)
     if opt.wblogger is not None:
-        logger  = WandbLogger(project=opt.wblogger,name="PromptIR-Train")
+        logger  = WandbLogger(project=opt.wblogger,name="AM_PromptIR-Train")
     else:
         logger = TensorBoardLogger(save_dir = "logs/")
 
@@ -65,7 +65,7 @@ def main():
     trainloader = DataLoader(trainset, batch_size=opt.batch_size, pin_memory=True, shuffle=True,
                              drop_last=True, num_workers=opt.num_workers)
     
-    model = PromptIRModel()
+    model = AM_PromptIRModel()
     trainer = pl.Trainer( max_epochs=opt.epochs,accelerator="gpu",devices=opt.num_gpus,strategy="ddp",logger=logger,callbacks=[checkpoint_callback])
     trainer.fit(model=model, train_dataloaders=trainloader)
 
