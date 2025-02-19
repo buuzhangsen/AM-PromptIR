@@ -5,7 +5,7 @@ import numpy as np
 
 import torch
 from torch.utils.data import DataLoader
-from net.model import PromptIR
+from net.model import AM_PromptIR
 
 from utils.dataset_utils import TestSpecificDataset
 from utils.image_io import save_image_tensor
@@ -46,10 +46,10 @@ def tile_eval(model,input_,tile=128,tile_overlap =32):
 
     restored = torch.clamp(restored, 0, 1)
     return restored
-class PromptIRModel(pl.LightningModule):
+class AM_PromptIRModel(pl.LightningModule):
     def __init__(self):
         super().__init__()
-        self.net = PromptIR(decoder=True)
+        self.net = AM_PromptIR(decoder=True)
         self.loss_fn  = nn.L1Loss()
     
     def forward(self,x):
@@ -105,7 +105,7 @@ if __name__ == '__main__':
     # Make network
     if torch.cuda.is_available():
         torch.cuda.set_device(opt.cuda)
-    net  = PromptIRModel().load_from_checkpoint(ckpt_path).to(device)
+    net  = AM_PromptIRModel().load_from_checkpoint(ckpt_path).to(device)
     net.eval()
 
     test_set = TestSpecificDataset(opt)
