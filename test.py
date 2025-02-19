@@ -129,11 +129,11 @@ if __name__ == '__main__':
     parser.add_argument('--mode', type=int, default=3,
                         help='0 for denoise, 1 for derain, 2 for dehaze, 3 for all-in-one')
 
-    parser.add_argument('--denoise_path', type=str, default="/project/train/src_repo/PromptIR-main/data/data/test/denoise1", help='save path of test noisy images')
-    parser.add_argument('--derain_path', type=str, default="/project/train/src_repo/PromptIR-main/data/data/test/derain", help='save path of test raining images')
-    parser.add_argument('--dehaze_path', type=str, default="/project/train/src_repo/PromptIR-main/data/data/test/dehaze", help='save path of test hazy images')
-    parser.add_argument('--output_path', type=str, default="/project/train/src_repo/PromptIR-main/output/", help='output save path')
-    parser.add_argument('--ckpt_name', type=str, default="/project/train/src_repo/PromptIR-main/best_result/test_GSFN_ciajiann/epoch=116-step=529893-v1.ckpt", help='checkpoint save path')
+    parser.add_argument('--denoise_path', type=str, default="/data/data/test/denoise1", help='save path of test noisy images')
+    parser.add_argument('--derain_path', type=str, default="/data/data/test/derain", help='save path of test raining images')
+    parser.add_argument('--dehaze_path', type=str, default="/data/data/test/dehaze", help='save path of test hazy images')
+    parser.add_argument('--output_path', type=str, default="/output/", help='output save path')
+    parser.add_argument('--ckpt_name', type=str, default="/best_result/", help='checkpoint save path')
     testopt = parser.parse_args()
     
     
