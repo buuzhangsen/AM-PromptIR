@@ -418,9 +418,9 @@ class ChannelGate(nn.Module):
         return scale
 
 ##########################################################################
-##---------- PromptIR -----------------------
+##---------- AM_PromptIR -----------------------
 
-class PromptIR(nn.Module):
+class AM_PromptIR(nn.Module):
     def __init__(self,
                  inp_channels=3,
                  out_channels=3,
@@ -435,7 +435,7 @@ class PromptIR(nn.Module):
                  decoder=False,
                  ):
 
-        super(PromptIR, self).__init__()
+        super(AM_PromptIR, self).__init__()
 
         self.patch_embed = OverlapPatchEmbed(inp_channels, dim)
 
