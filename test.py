@@ -11,12 +11,12 @@ import torch.nn as nn
 from utils.dataset_utils import DenoiseTestDataset, DerainDehazeDataset
 from utils.val_utils import AverageMeter, compute_psnr_ssim
 from utils.image_io import save_image_tensor
-from net.test1 import PromptIR
+from net.test1 import AM_PromptIR
 from My_loss import CharbonnierLoss,Fu_loss 
 import lightning.pytorch as pl
 import torch.nn.functional as F
 
-class PromptIRModel(pl.LightningModule):
+class AM_PromptIRModel(pl.LightningModule):
     def __init__(self):
         super().__init__()
         self.net = PromptIR(decoder=True)
@@ -177,7 +177,7 @@ if __name__ == '__main__':
 
     print("CKPT name : {}".format(ckpt_path))
 
-    net  = PromptIRModel().load_from_checkpoint(ckpt_path).cuda()
+    net  = AM_PromptIRModel().load_from_checkpoint(ckpt_path).cuda()
     net.eval()
 
     
@@ -231,7 +231,7 @@ if __name__ == '__main__':
 #             derain_set = DerainDehazeDataset(testopt,addnoise=False,sigma=15)
 #             # psnr,ssim = test_Derain(net, derain_set, task="derain")
 #             for ckpt_path in files_out:
-#                 net  = PromptIRModel().load_from_checkpoint(ckpt_path).cuda()
+#                 net  = AM_PromptIRModel().load_from_checkpoint(ckpt_path).cuda()
 #                 net.eval()
 #                 psnr,ssim = test_Derain(net, derain_set, task="derain")
 #                 if best_rain_psnr<psnr:
@@ -253,7 +253,7 @@ if __name__ == '__main__':
 #             dehaze_set = DerainDehazeDataset(testopt,addnoise=False,sigma=15)
 #             # psnr,ssim = test_Dehaze(net, dehaze_set, task="dehaze")
 #             for ckpt_path in files_out:
-#                 net  = PromptIRModel().load_from_checkpoint(ckpt_path).cuda()
+#                 net  = AM_PromptIRModel().load_from_checkpoint(ckpt_path).cuda()
 #                 net.eval()
 #                 psnr ,ssim = test_Dehaze(net, dehaze_set, task="dehaze")
 #                 if best_haze_psnr < psnr:
