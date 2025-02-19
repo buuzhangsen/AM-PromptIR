@@ -19,7 +19,7 @@ import torch.nn.functional as F
 class AM_PromptIRModel(pl.LightningModule):
     def __init__(self):
         super().__init__()
-        self.net = PromptIR(decoder=True)
+        self.net = AM_PromptIR(decoder=True)
         self.loss_fn  = nn.L1Loss()
         
     
