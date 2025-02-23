@@ -8,7 +8,7 @@ The above content contains all the code details of the "Adaptive Multi-modal Pro
 ## Network Architecture
 
 <img src = "AM-PromptIR.jpg"> 
-The above diagram shows the overall architecture of the AM PromptIR network, and the corresponding code is mainly stored in the  ```net/main.py ``` file.
+The above diagram shows the overall architecture of the AM PromptIR network, and the corresponding code is mainly stored in the  ```net/main.py ```.
 
 
 ## Dataset Download and Preperation
