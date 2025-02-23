@@ -97,7 +97,8 @@ The following is a visual comparison of image dehazing.
 The following is a visual comparison of image derain.
 <img src = "derain.jpg"> 
 
-
+## Publish journal
+This paper is currently submitted to ```The Vision Computer```.
 
 ## Contact
 **Acknowledgment:** This code is based on the [AirNet](https://github.com/XLearning-SCU/2022-CVPR-AirNet) and [PromptIR](https://github.com/va1shn9v/PromptIR) repositories. 
