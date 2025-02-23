@@ -8,7 +8,8 @@ The above content contains all the code details of the "Adaptive Multi-modal Pro
 ## Network Architecture
 
 <img src = "AM-PromptIR.jpg"> 
-The above diagram shows the overall architecture of the AM PromptIR network, and the corresponding code is mainly stored in the  ```net/main.py ```.
+
+The above diagram shows the overall architecture of the AM PromptIR network, and the corresponding code is mainly stored in the  ```net/main.py```.
 
 
 ## Dataset Download and Preperation
@@ -21,11 +22,11 @@ Deraining: [Train100L&Rain100L](https://drive.google.com/drive/folders/1-_Tw-LHJ
 
 Dehazing: [RESIDE](https://sites.google.com/view/reside-dehaze-datasets/reside-v0) 
 
-The training data should be placed in ``` data/Train/{task_name}``` directory where ```task_name``` can be Denoise,Derain or Dehaze.
+The training data should be placed in ``` data/Train/{task_name}``` directory where ```task_name``` can be Denoise,Derain or Dehazy.
 After placing the training data the directory structure would be as follows:
 ```
 └───Train
-    ├───Dehaze
+    ├───Dehazy
     │   ├───high
     │   └───low
     ├───Denoise
@@ -37,7 +38,7 @@ After placing the training data the directory structure would be as follows:
 The testing data should be placed in the ```test``` directory wherein each task has a seperate directory. The test directory after setup:
 
 ```
-├───dehaze
+├───dehazy
 │   └───SOTS
 │       ├───low
 │       └───high
