@@ -1,14 +1,14 @@
 # Adaptive Multi-modal Prompting for All-in-One Image Restoration Amidst Diverse Degradations
-
+The above content contains all the code details of the "Adaptive Multi-modal Prompting for All-in-One Image Restoration Amidst Diverse Degradations". As the article has not yet been published, we will only provide all our visual output results.
 
 <hr />
-
 > **Abstract:** *The field of image restoration aims to recover high-quality images from their degraded counterparts, encompassing tasks such as denoising, deraining, and dehazing. In real-world scenarios, images often suffer from complex and diverse degradations, posing significant challenges for existing restoration models. To address this, we propose AM-PromptIR, an adaptive multi-modal image restoration framework that leverages implicit relationships between diverse degradation types to guide the restoration process. Specifically, we propose an Adaptive Multi-modal Prompt Generation (AMPG) module that leverages a pre-trained language-image model to capture the implicit relationships between various degradation types. By refining these relationships and dynamically adjusting the attention distribution of image features, AMPG enhances the model's understanding of the intricate interplay between images and their degradation patterns. Additionally, we introduce a Simplified Mixed Attention Mechanism (SMAM) and a Feature Enhancement and Fusion Module (FEFM) to improve feature extraction and fusion, respectively. The experimental results showed that compared with the baseline model PromptIr, AM-PromptIR improved PSNR by 9.2% in dehazing  tasks, 5.3% in deraining operations, and an average PSNR increase of 3.0% in various degraded tasks.These findings highlight the robustness and effectiveness of our approach in handling diverse image degradations.* 
 <hr />
 
 ## Network Architecture
 
 <img src = "AM-PromptIR.jpg"> 
+The above diagram shows the overall architecture of the AM PromptIR network, and the corresponding code is mainly stored in the net/main.py file.
 
 ## Installation and Data Preparation
 
