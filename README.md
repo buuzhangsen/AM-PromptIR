@@ -72,7 +72,7 @@ python train.py --de_type derain
 
 ## Testing
 
-After preparing the testing data in ```test/``` directory, place the mode checkpoint file in the ```ckpt``` directory.  To perform the evalaution use
+After preparing the testing data in ```test/``` directory, place the mode checkpoint file in the ```ckpt``` directory.  To perform the evalaution use.Pre training weights can be obtained from [here](https://drive.google.com/file/d/1_PLsn4IlBWKqAdYJifMXlsKoj5vElQAG/view?usp=sharing)
 ```
 python test.py --mode {n}
 ```
