@@ -10,10 +10,52 @@ The above content contains all the code details of the "Adaptive Multi-modal Pro
 <img src = "AM-PromptIR.jpg"> 
 The above diagram shows the overall architecture of the AM PromptIR network, and the corresponding code is mainly stored in the net/main.py file.
 
-## Installation and Data Preparation
 
-See [INSTALL.md](INSTALL.md) for the installation of dependencies and dataset preperation required to run this codebase.
+## Dataset Download and Preperation
 
+All the 5 datasets used in the paper can be downloaded from the following locations:
+
+Denoising: [BSD400](https://drive.google.com/file/d/1idKFDkAHJGAFDn1OyXZxsTbOSBx9GS8N/view?usp=sharing), [WED](https://drive.google.com/file/d/19_mCE_GXfmE5yYsm-HEzuZQqmwMjPpJr/view?usp=sharing), [Urban100](https://drive.google.com/drive/folders/1B3DJGQKB6eNdwuQIhdskA64qUuVKLZ9u)
+
+Deraining: [Train100L&Rain100L](https://drive.google.com/drive/folders/1-_Tw-LHJF4vh8fpogKgZx1EQ9MhsJI_f?usp=sharing)
+
+Dehazing: [RESIDE](https://sites.google.com/view/reside-dehaze-datasets/reside-v0) 
+
+The training data should be placed in ``` data/Train/{task_name}``` directory where ```task_name``` can be Denoise,Derain or Dehaze.
+After placing the training data the directory structure would be as follows:
+```
+└───Train
+    ├───Dehaze
+    │   ├───high
+    │   └───low
+    ├───Denoise
+    └───Derain
+        ├───high
+        └───low
+```
+
+The testing data should be placed in the ```test``` directory wherein each task has a seperate directory. The test directory after setup:
+
+```
+├───dehaze
+│   └───SOTS
+│       ├───low
+│       └───high
+├───denoise
+│   ├───bsd68
+│   └───urban100
+└───derain
+    └───Rain100L
+        ├───low
+        └───high
+```
+
+## Environmental installation
+
+All experimental environment dependency packages in this paper are located in the 'indispensable.txt' file, and the installation command is:
+```
+pip install indispensable.txt
+```
 ## Training
 
 After preparing the training data in ```data/``` directory, use 
@@ -42,14 +84,16 @@ python test.py --mode 3
 ```
 
 ## Results
-Performance results of the AM-PromptIR framework trained under the all-in-one setting
+Performance results of the AM-PromptIR framework trained under the all-in-one setting,The visualization results of this experiment can be downloaded from ""
 
 <summary><strong>Table</strong> </summary>
-
+The following table is a comparison chart of experimental evaluation indicators.
 <img src = "result.png"> 
 
 <summary><strong>Visual Results</strong></summary>
+The following is a visual comparison of image dehazing.
 <img src = "dehazy.jpg"> 
+The following is a visual comparison of image derain.
 <img src = "derain.jpg"> 
 
 
