@@ -84,7 +84,7 @@ python test.py --mode 3
 ```
 
 ## Results
-Performance results of the AM-PromptIR framework trained under the all-in-one setting,The visualization results of this experiment can be downloaded from  ```[Output](https://drive.google.com/file/d/1q5cxl8Bs00m5aVHe2tIbe--ErX6QSjz-/view?usp=sharing)```
+Performance results of the AM-PromptIR framework trained under the all-in-one setting,The visualization results of this experiment can be downloaded from [Output](https://drive.google.com/file/d/1q5cxl8Bs00m5aVHe2tIbe--ErX6QSjz-/view?usp=sharing).
 
 <summary><strong>Table</strong> </summary>
 The following table is a comparison chart of experimental evaluation indicators.
