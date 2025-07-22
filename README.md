@@ -2,7 +2,7 @@
 The above content contains all the code details of the "Adaptive Multi-modal Prompting for All-in-One Image Restoration Amidst Diverse Degradations". This paper is currently submitted to  ```The Vision Computer ```.
 
 <hr />
-> **Abstract:** *The field of image restoration aims to recover high-quality images from their degraded counterparts, encompassing tasks such as denoising, deraining, and dehazing. In real-world scenarios, images often suffer from complex and diverse degradations, posing significant challenges for existing restoration models. To address this, we propose AM-PromptIR, an adaptive multi-modal image restoration framework that leverages implicit relationships between diverse degradation types to guide the restoration process. Specifically, we propose an Adaptive Multi-modal Prompt Generation (AMPG) module that leverages a pre-trained language-image model to capture the implicit relationships between various degradation types. By refining these relationships and dynamically adjusting the attention distribution of image features, AMPG enhances the model's understanding of the intricate interplay between images and their degradation patterns. Additionally, we introduce a Simplified Mixed Attention Mechanism (SMAM) and a Feature Enhancement and Fusion Module (FEFM) to improve feature extraction and fusion, respectively. The experimental results showed that compared with the baseline model PromptIr, AM-PromptIR improved PSNR by 9.2% in dehazing  tasks, 5.3% in deraining operations, and an average PSNR increase of 3.0% in various degraded tasks.These findings highlight the robustness and effectiveness of our approach in handling diverse image degradations.* 
+The field of image restoration aims to recover high-quality images from their degraded counterparts, encompassing tasks such as denoising, deraining, and dehazing. In real-world scenarios, images often suffer from complex and diverse degradations, posing significant challenges for existing restoration models. To address this, we propose AM-PromptIR, an adaptive multi-modal image restoration framework that leverages implicit relationships between diverse degradation types to guide the restoration process. Specifically, we propose an Adaptive Multi-modal Prompt Generation (AMPG) module that leverages a pre-trained language-image model to capture the implicit relationships between various degradation types. By refining these relationships and dynamically adjusting the attention distribution of image features, AMPG enhances the model's understanding of the intricate interplay between images and their degradation patterns. Additionally, we introduce a Simplified Mixed Attention Mechanism (SMAM) and a Feature Enhancement and Fusion Module (FEFM) to improve feature extraction and fusion, respectively. The experimental results showed that compared with the baseline model PromptIr, AM-PromptIR improved PSNR by 9.2% in dehazing  tasks, 5.3% in deraining operations, and an average PSNR increase of 3.0% in various degraded tasks.These findings highlight the robustness and effectiveness of our approach in handling diverse image degradations.
 <hr />
 
 ## Network Architecture
@@ -72,7 +72,7 @@ python train.py --de_type derain
 
 ## Testing
 
-After preparing the testing data in ```test/``` directory, place the mode checkpoint file in the ```ckpt``` directory.  To perform the evalaution use.Pre training weights can be obtained from [here](https://drive.google.com/file/d/1_PLsn4IlBWKqAdYJifMXlsKoj5vElQAG/view?usp=sharing)
+After preparing the testing data in ```test/``` directory, place the mode checkpoint file in the ```ckpt``` directory.  To perform the evalaution use.Pre training weights can be obtained from
 ```
 python test.py --mode {n}
 ```
@@ -85,17 +85,7 @@ python test.py --mode 3
 ```
 
 ## Results
-Performance results of the AM-PromptIR framework trained under the all-in-one setting,The visualization results of this experiment can be downloaded from [Output](https://drive.google.com/file/d/1q5cxl8Bs00m5aVHe2tIbe--ErX6QSjz-/view?usp=sharing).
-
-<summary><strong>Table</strong> </summary>
-The following table is a comparison chart of experimental evaluation indicators.
-<img src = "result.png"> 
-
-<summary><strong>Visual Results</strong></summary>
-The following is a visual comparison of image dehazing.
-<img src = "dehazy.jpg"> 
-The following is a visual comparison of image derain.
-<img src = "derain.jpg"> 
+Performance results of the AM-PromptIR framework trained under the all-in-one setting,The visualization results of this experiment can be downloaded from 
 
 ## Publish journal
 This paper is currently submitted to ```The Vision Computer```.
